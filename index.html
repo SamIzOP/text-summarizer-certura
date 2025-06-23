@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flask Text Summarization Tool</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header .subtitle {
+            color: #7f8c8d;
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+        }
+
+        .tech-badge {
+            display: inline-block;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .input-section, .output-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+
+        .input-section:hover, .output-section:hover {
+            border-color: #667eea;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.1);
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .icon {
+            width: 24px;
+            height: 24px;
+            fill: #667eea;
+        }
+
+        textarea {
+            width: 100%;
+            height: 200px;
+            padding: 15px;
+            border: 2px solid #dee2e6;
+            border-radius: 10px;
+            font-size: 14px;
+            line-height: 1.5;
+            resize: vertical;
+            transition: border-color 0.3s ease;
+            font-family: inherit;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .control-group label {
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .control-group input[type="number"] {
+            width: 70px;
+            padding: 8px;
+            border: 2px solid #dee2e6;
+            border-radius: 5px;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .control-group input[type="number"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .output-text {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+            min-height: 150px;
+            line-height: 1.6;
+            color: #2c3e50;
+            font-size: 14px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-card {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .example-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 30px;
+            border: 2px solid #e9ecef;
+        }
+
+        .example-btn {
+            background: #28a745;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            color: #667eea;
+            font-style: italic;
+            padding: 20px;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #667eea;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .error, .success {
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            display: none;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .api-info {
+            background: #e3f2fd;
+            border: 1px solid #bbdefb;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            font-size: 0.9rem;
+            color: #1565c0;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .container {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🐍 Flask Text Summarization Tool</h1>
+            <p class="subtitle">Powered by spaCy NLP and intelligent text analysis</p>
+            <div class="tech-badge">🚀 Python + Flask + spaCy</div>
+        </div>
+
+        <div class="main-content">
+            <div class="input-section">
+                <h2 class="section-title">
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
+                    </svg>
+                    Input Text
+                </h2>
+                <textarea id="inputText" placeholder="Paste your text here to summarize using advanced NLP..."></textarea>
+                
+                <div class="controls">
+                    <div class="control-group">
+                        <label for="sentenceCount">Summary Length:</label>
+                        <input type="number" id="sentenceCount" value="3" min="1" max="10">
+                        <span>sentences</span>
+                    </div>
+                    <button class="btn" onclick="summarizeText()">
+                        🧠 Analyze with spaCy
+                    </button>
+                </div>
+            </div>
+
+            <div class="output-section">
+                <h2 class="section-title">
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
+                    </svg>
+                    AI-Generated Summary
+                </h2>
+                <div class="loading" id="loading">
+                    <div class="loading-spinner"></div>
+                    Processing with spaCy NLP models...
+                </div>
+                <div class="error" id="error"></div>
+                <div class="success" id="success"></div>
+                <div class="output-text" id="outputText">Your intelligent summary will appear here...</div>
+            </div>
+        </div>
+
+        <div class="stats" id="stats" style="display: none;">
+            <div class="stat-card">
+                <div class="stat-value" id="originalWords">0</div>
+                <div class="stat-label">Original Words</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="summaryWords">0</div>
+                <div class="stat-label">Summary Words</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="compressionRatio">0%</div>
+                <div class="stat-label">Compression</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="originalSentences">0</div>
+                <div class="stat-label">Original Sentences</div>
+            </div>
+        </div>
+
+        <div class="example-section">
+            <h2 class="section-title">
+                <svg class="icon" viewBox="0 0 24 24">
+                    <path d="M9,5V9H21V5M9,19H21V15H9M9,14H21V10H9M4,9H8V5H4M4,19H8V15H4M4,14H8V10H4V14Z" />
+                </svg>
+                Try Example Texts
+            </h2>
+            <button class="btn example-btn" onclick="loadExample('ai')">🤖 AI Technology</button>
+            <button class="btn example-btn" onclick="loadExample('climate')">🌍 Climate Change</button>
+            <button class="btn example-btn" onclick="loadExample('space')">🚀 Space Exploration</button>
+        </div>
+
+        <div class="api-info">
+            <strong>🔧 API Information:</strong><br>
+            • Endpoint: <code>POST /api/summarize</code><br>
+            • Health Check: <code>GET /health</code><br>
+            • Examples: <code>GET /api/examples/{type}</code>
+        </div>
+    </div>
+
+    <script>
+        async function summarizeText() {
+            const inputText = document.getElementById('inputText').value.trim();
+            const numSentences = parseInt(document.getElementById('sentenceCount').value) || 3;
+            
+            const loadingEl = document.getElementById('loading');
+            const errorEl = document.getElementById('error');
+            const successEl = document.getElementById('success');
+            const outputEl = document.getElementById('outputText');
+            const statsEl = document.getElementById('stats');
+            
+            // Reset UI
+            loadingEl.style.display = 'block';
+            errorEl.style.display = 'none';
+            successEl.style.display = 'none';
+            outputEl.textContent = '';
+            statsEl.style.display = 'none';
+            
+            if (!inputText) {
+                showError('Please enter some text to summarize.');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/summarize', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        text: inputText,
+                        num_sentences: numSentences
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || 'Server error occurred');
+                }
+                
+                // Display results
+                loadingEl.style.display = 'none';
+                outputEl.textContent = data.summary;
+                
+                // Show success message
+                successEl.textContent = '✅ Text successfully summarized using spaCy NLP!';
+                successEl.style.display = 'block';
+                
+                // Update statistics
+                const stats = data.stats;
+                document.getElementById('originalWords').textContent = stats.original_words;
+                document.getElementById('summaryWords').textContent = stats.summary_words;
+                document.getElementById('compressionRatio').textContent = stats.compression_ratio + '%';
+                document.getElementById('originalSentences').textContent = stats.original_sentences;
+                
+                statsEl.style.display = 'grid';
+                
+            } catch (error) {
+                showError(`Error: ${error.message}`);
+            }
+        }
+        
+        async function loadExample(type) {
+            try {
+                const response = await fetch(`/api/examples/${type}`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('inputText').value = data.text;
+                    document.getElementById('success').textContent = `✅ Loaded ${type.toUpperCase()} example text`;
+                    document.getElementById('success').style.display = 'block';
+                    setTimeout(() => {
+                        document.getElementById('success').style.display = 'none';
+                    }, 3000);
+                } else {
+                    showError('Failed to load example text');
+                }
+            } catch (error) {
+                showError('Failed to load example text');
+            }
+        }
+        
+        function showError(message) {
+            const loadingEl = document.getElementById('loading');
+            const errorEl = document.getElementById('error');
+            
+            loadingEl.style.display = 'none';
+            errorEl.textContent = message;
+            errorEl.style.display = 'block';
+        }
+        
+        // Allow Enter key to trigger summarization
+        document.getElementById('inputText').addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'Enter') {
+                summarizeText();
+            }
+        });
+        
+        // Auto-hide success messages
+        function autoHideSuccess() {
+            setTimeout(() => {
+                const successEl = document.getElementById('success');
+                if (successEl.style.display === 'block') {
+                    successEl.style.display = 'none';
+                }
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
